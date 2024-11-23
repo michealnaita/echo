@@ -1,0 +1,7 @@
+node_modules
+npm-debug.log
+lib
+.wa_auth
+.env*
+service-account-key.json
+.DS_Store

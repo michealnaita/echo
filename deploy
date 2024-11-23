@@ -1,0 +1,19 @@
+#! /bin/bash
+
+set -e 
+
+if [ -z "$DOCKER_USER" ]; then 
+    echo "No docker client found"
+    false
+elif [ ! -e "/usr/local/bin/docker" ]; then
+    echo "No docker user found"
+    false
+elif [ ! -e "/etc/tBot" ]; then
+    echo "App config not found. make sure script is running in production environment"
+    false
+fi
+
+image_name="$DOCKER_USER/tbot"
+
+docker pull "$image_name"
+docker run --name="tbot-prod" --env-file=/etc/tBot/.env -v /etc/.wa-auth:/app/.wa-auth --memory=1g -e NDOE_ENV=production -d "$image_name"

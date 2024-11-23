@@ -1,0 +1,2 @@
+#! /bin/bash
+docker run --rm -v "$(pwd):/app"  -w /app --memory=1g  --env-file .env -e NODE_ENV=development node:20-alpine3.20 npm run dev
