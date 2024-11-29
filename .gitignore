@@ -1,7 +1,10 @@
 node_modules
 npm-debug.log
 lib
-.wa_auth
+.wa-auth
 .env*
 service-account-key.json
 .DS_Store
+ssl
+ssh
+logs

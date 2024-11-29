@@ -1,0 +1,54 @@
+{
+  "text": {
+    "message": {
+      "extendedTextMessage": {
+        "text": "Hey"
+      }
+    }
+  },
+  "image": {
+    "message": {
+      "imageMessage": {
+        "mimetype": "image/jpeg"
+      }
+    }
+  },
+  "imageWithText": {
+    "message": {
+      "imageMessage": {
+        "mimetype": "image/jpeg",
+        "caption": "text"
+      }
+    }
+  },
+  "video": {
+    "message": {
+      "videoMessage": {
+        "mimetype": "video/mp4"
+      }
+    }
+  },
+  "videoWithText": {
+    "message": {
+      "videoMessage": {
+        "mimetype": "video/mp4",
+        "caption": "Sticker"
+      }
+    }
+  },
+  "conversation": {
+    "message": {
+      "conversation": "message"
+    }
+  },
+  "mention": {
+    "message": {
+      "extendedTextMessage": {
+        "text": "@123456789 text",
+        "contextInfo": {
+          "mentionedJid": ["123456789@s.whatsapp.net"]
+        }
+      }
+    }
+  }
+}

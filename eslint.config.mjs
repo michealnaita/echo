@@ -4,10 +4,13 @@ import tseslint from 'typescript-eslint';
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
+  pluginJs.configs.recommended,
+  ...tseslint.configs.recommended,
   {
     files: ['**/*.{js,mjs,cjs,ts}'],
     languageOptions: { globals: globals.node },
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
   },
-  pluginJs.configs.recommended,
-  ...tseslint.configs.recommended,
 ];

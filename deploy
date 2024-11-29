@@ -2,18 +2,21 @@
 
 set -e 
 
-if [ -z "$DOCKER_USER" ]; then 
-    echo "No docker client found"
-    false
-elif [ ! -e "/usr/local/bin/docker" ]; then
+DOCKER_USERNAME=$1
+docker_path=(which docker)
+
+if [ -z "$DOCKER_USERNAME" ]; then 
     echo "No docker user found"
     false
-elif [ ! -e "/etc/tBot" ]; then
+elif [ ! -e "/var/tBot" ]; then
     echo "App config not found. make sure script is running in production environment"
     false
 fi
 
-image_name="$DOCKER_USER/tbot"
+image_name="$DOCKER_USERNAME/tbot"
+container_name="tbot-prod"
 
 docker pull "$image_name"
-docker run --name="tbot-prod" --env-file=/etc/tBot/.env -v /etc/.wa-auth:/app/.wa-auth --memory=1g -e NDOE_ENV=production -d "$image_name"
+docker rm -f "$container_name"
+docker run --name="$container_name" --env-file=/etc/tBot/.env.prod -p 443:443 -v /var/tBot/.wa-auth:/app/.wa-auth -v /etc/tBot/ssl:/app/ssl -v /etc/tBot/service-account-key.json:/app/service-account-key.json -v /var/tBot/logs:/app/logs --memory=1g -e NDOE_ENV=production -d "$image_name"
+echo Deploy complete 🚀.
