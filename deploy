@@ -3,7 +3,6 @@
 set -e 
 
 DOCKER_USERNAME=$1
-docker_path=(which docker)
 
 if [ -z "$DOCKER_USERNAME" ]; then 
     echo "No docker user found"
@@ -17,6 +16,11 @@ image_name="$DOCKER_USERNAME/tbot"
 container_name="tbot-prod"
 
 docker pull "$image_name"
-docker rm -f "$container_name"
+
+if docker ps -a --format '{{.Names}}' | grep -q "$container_name"; then
+  echo "Container exists. Deleting..."
+  docker rm -f "$container_name"
+fi
+
 docker run --name="$container_name" --env-file=/etc/tBot/.env.prod -p 443:443 -v /var/tBot/.wa-auth:/app/.wa-auth -v /etc/tBot/ssl:/app/ssl -v /etc/tBot/service-account-key.json:/app/service-account-key.json -v /var/tBot/logs:/app/logs --memory=1g -e NDOE_ENV=production -d "$image_name"
 echo Deploy complete 🚀.

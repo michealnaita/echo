@@ -4,13 +4,13 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '!**/*.md'
+    paths-ignore:
+      - '**/*.md'
   pull_request:
     branches:
       - main
-    paths:
-      - '!**/*.md'
+    paths-ignore:
+      - '**/*.md'
   workflow_dispatch:
 jobs:
   setup:
@@ -26,5 +26,5 @@ jobs:
           docker push "${{ secrets.DOCKER_USERNAME }}/tbot"
       - name: Run App Image on Server
         run: |
-          echo ${{ secrets.SSH_KEY }} > ~/.ssh/id_rsa
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} "bash -s ${{secrets.DOCKER_USERNAME}}" < ./deploy
+          echo "${{ secrets.SSH_KEY }}" > ssh_key && chmod 600 ssh_key
+          ssh -i ssh_key -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} "bash -s ${{secrets.DOCKER_USERNAME}}" < ./deploy
