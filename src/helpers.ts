@@ -1,6 +1,9 @@
 import { proto } from '@whiskeysockets/baileys';
 import store from './store';
 import settings from './settings';
+import fs from 'fs/promises';
+import logger from './logger';
+import path from 'path';
 
 const urlRe =
   /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?/gi;
@@ -68,4 +71,17 @@ export const hasMentions = (msg: proto.IWebMessageInfo): string[] | false => {
   if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid)
     return msg.message.extendedTextMessage?.contextInfo.mentionedJid;
   return false;
+};
+
+export const deleteFolderContents = async (folderPath: string) => {
+  try {
+    const files = await fs.readdir(folderPath);
+    for (const file of files) {
+      const filePath = path.join(folderPath, file);
+      await fs.rm(filePath, { recursive: true, force: true });
+    }
+    logger.info('removed past logins');
+  } catch (err) {
+    logger.error(`error deleting folder contents: ${err}`);
+  }
 };

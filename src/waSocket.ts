@@ -5,6 +5,7 @@ import makeWASocket, {
 } from '@whiskeysockets/baileys';
 import logger from './logger';
 import { Socket } from './types';
+import * as helpers from './helpers';
 
 const waLogger = logger.child({ whatsapp_logs: true });
 waLogger.level = 'info';
@@ -28,7 +29,6 @@ class WASocket {
    * @param listeners - Handlers to manage socket events
    */
   constructor(
-    phoneNumber: string,
     credsPath: string,
     listeners: (socket: Socket) => (events: Partial<BaileysEventMap>) => void
   ) {
@@ -41,14 +41,13 @@ class WASocket {
    * @param message - success message
    * @param isManualLogin - is true if user initated login manually
    */
-  async start(message: string) {
+  async start(callback: (err?: Error) => void) {
     if (this.socket !== null) {
       this.close();
       this.socket = null;
     }
     //credetial management
     const { state, saveCreds } = await useMultiFileAuthState(this.credsPath);
-
     // create whatsapp socket
     this.socket = makeWASocket({
       logger: waLogger as any,
@@ -62,15 +61,15 @@ class WASocket {
     });
 
     // save wa creds whenever they are updated
-    this.socket.ev.on('creds.update', () => {
-      saveCreds();
+    this.socket.ev.on('creds.update', async () => {
+      await saveCreds();
     });
 
     this.socket.ev.on('connection.update', (update) => {
       const { connection, lastDisconnect } = update;
       if (connection === 'open') {
         this.online = true;
-        logger.info('Socked connected', { message });
+        callback();
       }
       if (connection === 'close') {
         this.online = false;
@@ -82,28 +81,31 @@ class WASocket {
           DisconnectReason.loggedOut;
 
         if (connectionClosed) {
-          logger.info('socket connection closed');
+          callback(new Error('socket connection closed'));
           return;
         }
         if (isLoggedOut) {
-          // TODO: 1.notify admin that device has been logged
-          logger.info('whatsapp agent logged out');
+          helpers.deleteFolderContents(this.credsPath);
+          callback(new Error('whatsapp agent logged out'));
           return;
         }
         if (this.retries === MAX_RETRY) {
-          // TODO: 1.notify admin that connectionhas failed
+          const reason =
+            (lastDisconnect?.error as any)?.output.statusCode || 'unknown';
           logger.info('maximum retries reached');
           logger.error('Socket connection failed', {
-            reason:
-              (lastDisconnect?.error as any)?.output.statusCode || 'unknown',
+            reason,
           });
+          callback(
+            new Error('Socket connection failed, statuscode: ' + reason)
+          );
           return;
         }
         logger.info('retrying failed connection', {
           reason:
             (lastDisconnect?.error as any)?.output.statusCode || 'unknown',
         });
-        this.start(message);
+        this.start(callback);
         this.retries++;
       }
     });

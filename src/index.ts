@@ -35,30 +35,38 @@ if (settings.isDev) {
 
 // Whatsapp agent Conf
 const credentials = path.join(process.cwd(), '.wa-auth');
-const phoneNumber = process.env.PHONE_NUMBER as string;
-const agent = new WASocket(phoneNumber, credentials, listeners);
+const agent = new WASocket(credentials, listeners);
 
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   if (settings.isDev) return next();
   if (req.headers['x-secret'] && req.headers['x-secret'] === process.env.SECRET)
     return next();
   next(createHttpError(401));
 });
 
-app.get('/__/startAgent', async (req, res, next) => {
+app.get('/__/startAgent', async (_req, res, next) => {
   try {
     if (agent.online) {
       res.sendStatus(200);
       return;
     }
-    await agent.start('Socket is up and running! 🚀');
-    res.sendStatus(200);
+    agent.start((err) => {
+      if (err) {
+        logger.error(err.message);
+        res.status(500).json({
+          message: err.message,
+        });
+        return;
+      }
+      logger.info('Translation bot is up and online! 🚀');
+      res.sendStatus(200);
+    });
   } catch (e) {
     next(e);
   }
 });
 
-app.get('/__/pingAgent', async (req, res) => {
+app.get('/__/pingAgent', async (_req, res) => {
   if (agent.online) {
     res.sendStatus(200);
   } else {
@@ -66,7 +74,7 @@ app.get('/__/pingAgent', async (req, res) => {
   }
 });
 
-app.get('/__/killAgent', async (req, res, next) => {
+app.get('/__/killAgent', async (_req, res, next) => {
   try {
     if (!agent.online) {
       res.send(200);
@@ -80,6 +88,7 @@ app.get('/__/killAgent', async (req, res, next) => {
 });
 
 // Error handler
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((error: any, req: any, res: any, next: any) => {
   logger.error(error.message, {
     error_object: JSON.stringify(error),
@@ -94,7 +103,13 @@ const cb = () => {
   logger.info('app is running on port: ' + settings.port);
   // start whatsapp socket
   try {
-    agent.start('Agent is online 🚀');
+    agent.start((err) => {
+      if (err) {
+        logger.error(err.message);
+        return;
+      }
+      logger.info('Translation bot is up and online! 🚀');
+    });
   } catch (e: any) {
     logger.error(e.message, { error_object: JSON.stringify(e) });
     agent.close();
@@ -134,6 +149,7 @@ const shutdown = () => {
       logger.info('Forcing shutdown...');
       process.exit(1);
     }, 5000);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e) {
     console.log('\nErrors occured while shutting down');
     console.log('Forcing shutdown...');

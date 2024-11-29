@@ -3,12 +3,20 @@ import * as helpers from './helpers';
 import getTranslation from './translations';
 import execInstruction from './instructions';
 import logger from './logger';
+import { proto } from '@whiskeysockets/baileys';
 
 const listeners = (sock: Socket) => async (events: SocketEvents) => {
   if (events['messages.upsert']) {
     const upsert = events['messages.upsert'];
     if (upsert.type == 'append' /* append message to chat*/) return;
     for (const msg of upsert.messages) {
+      if (
+        msg.message?.protocolMessage?.type ===
+        proto.Message.ProtocolMessage.Type.HISTORY_SYNC_NOTIFICATION
+      ) {
+        logger.warn('intercepted history sync message');
+        return;
+      }
       // Ignore messages from self
       if (msg.key.fromMe) return;
       const jid = msg.key!.remoteJid!;
