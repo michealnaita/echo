@@ -6,7 +6,10 @@ import { Logging } from '@google-cloud/logging';
 
 const { combine, timestamp, json } = winston.format;
 
-const logging = new Logging({ projectId: settings.projectId });
+let cloudLogging: any;
+if (process.env.GOOGLE_APPLICATION_CREDENTIALS && settings.isProd) {
+  cloudLogging = new Logging({ projectId: settings.projectId });
+}
 
 class CloudLogger extends Transport {
   constructor(opts?: any) {
@@ -17,7 +20,7 @@ class CloudLogger extends Transport {
     setImmediate(() => {
       this.emit('logged', info);
     });
-    const log = logging.log('tBot-server-logs');
+    const log = cloudLogging.log('tBot-server-logs');
     const entry = log.entry(
       {
         severity: level.toUpperCase(),
@@ -56,7 +59,10 @@ if (settings.isDev) {
       filename: path.join(process.cwd(), 'logs', 'combined.log'),
     })
   );
-  logger.add(new CloudLogger());
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    // enable cloud loging if service account key exists
+    logger.add(new CloudLogger());
+  }
   logger.add(new winston.transports.Console());
 }
 if (settings.isTesting) logger.silent = true;

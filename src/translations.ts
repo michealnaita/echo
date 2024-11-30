@@ -3,7 +3,10 @@ import logger from './logger';
 
 const LANGUAGES = ['en', 'tr'];
 
-const translate = new T.v2.Translate();
+let translate: any;
+if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  translate = new T.v2.Translate();
+}
 
 const detectLanguage = async (text: string): Promise<string | void> => {
   const [result] = await translate.detect(text);
@@ -25,6 +28,12 @@ const translateText = async (text: string, lang: string): Promise<string> => {
 };
 
 const getTranslation = async (text: string): Promise<string | void> => {
+  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    logger.warn(
+      'This project uses google translation api and you dont google credentials set up, please read docs.'
+    );
+    return 'Could not process translation 🧐. check logs';
+  }
   const lang = await detectLanguage(text);
   const langTo = lang == 'en' ? 'tr' : 'en';
   if (!lang) return;
