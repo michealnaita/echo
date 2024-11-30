@@ -37,6 +37,15 @@ if (settings.isDev) {
 const credentials = path.join(process.cwd(), '.wa-auth');
 const agent = new WASocket(credentials, listeners);
 
+app.get('/__/pingAgent', async (_req, res) => {
+  if (agent.online) {
+    res.sendStatus(200);
+  } else {
+    res.sendStatus(503);
+  }
+});
+
+// admin authentication
 app.use((req, _res, next) => {
   if (settings.isDev) return next();
   if (req.headers['x-secret'] && req.headers['x-secret'] === process.env.SECRET)
@@ -63,14 +72,6 @@ app.get('/__/startAgent', async (_req, res, next) => {
     });
   } catch (e) {
     next(e);
-  }
-});
-
-app.get('/__/pingAgent', async (_req, res) => {
-  if (agent.online) {
-    res.sendStatus(200);
-  } else {
-    res.sendStatus(503);
   }
 });
 
